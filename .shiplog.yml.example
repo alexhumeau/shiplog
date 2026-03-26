@@ -1,0 +1,41 @@
+notion:
+  database_id: "your-database-id-here"
+
+context:
+  readme: true
+  docs:
+    - "CLAUDE.md"
+    - "docs/ARCHITECTURE.md"
+  max_context_chars: 16000    # ~4000 tokens, tokenizer-independent
+  max_diff_lines: 500
+
+ai:
+  provider: "anthropic"            # anthropic | openai
+  model: "claude-sonnet-4-6"      # defaults: claude-sonnet-4-6 (anthropic), gpt-4o-mini (openai)
+  language: "fr"
+
+categories:
+  feat: "✨ Feature"
+  fix: "🐛 Bug Fix"
+  refactor: "♻️ Refactor"
+  docs: "📝 Documentation"
+  chore: "🔧 Maintenance"
+  perf: "⚡ Performance"
+
+filters:
+  branches: ["main"]
+  ignore_paths:
+    - "*.lock"
+    - "node_modules/**"
+    - ".github/**"
+  ignore_types: ["chore"]
+
+# For existing Notion databases: map your column names
+properties:
+  title: "Title"
+  type: "Type"
+  date: "Date"
+  branch: "Branch"
+  commits: "Commits"
+  files: "Files Changed"
+  screenshot: "Screenshot"

@@ -1,0 +1,4 @@
+shiplog
+dist/
+.shiplog-state.json
+*.exe
