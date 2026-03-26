@@ -1,0 +1,45 @@
+name: 'Shiplog'
+description: 'Auto-generate a Notion changelog from your git history'
+branding:
+  icon: 'book-open'
+  color: 'blue'
+inputs:
+  notion_token:
+    description: 'Notion integration token'
+    required: true
+  notion_database_id:
+    description: 'Notion database ID'
+    required: true
+  ai_provider:
+    description: 'LLM provider (anthropic or openai)'
+    required: false
+  ai_api_key:
+    description: 'LLM API key'
+    required: false
+  config_path:
+    description: 'Path to .shiplog.yml'
+    required: false
+    default: '.shiplog.yml'
+runs:
+  using: 'composite'
+  steps:
+    - name: Download Shiplog
+      shell: bash
+      run: |
+        ARCH=$(uname -m)
+        case "$ARCH" in
+          x86_64) ARCH="amd64" ;;
+          aarch64|arm64) ARCH="arm64" ;;
+        esac
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        curl -sL "https://github.com/alexandrehumeau/shiplog/releases/latest/download/shiplog-${OS}-${ARCH}.tar.gz" | tar xz -C /usr/local/bin shiplog
+        chmod +x /usr/local/bin/shiplog
+    - name: Run Shiplog
+      shell: bash
+      run: shiplog run
+      env:
+        NOTION_TOKEN: ${{ inputs.notion_token }}
+        NOTION_DATABASE_ID: ${{ inputs.notion_database_id }}
+        SHIPLOG_AI_PROVIDER: ${{ inputs.ai_provider }}
+        SHIPLOG_AI_API_KEY: ${{ inputs.ai_api_key }}
+        SHIPLOG_CONFIG: ${{ inputs.config_path }}
