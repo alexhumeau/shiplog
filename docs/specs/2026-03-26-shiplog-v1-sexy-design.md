@@ -56,7 +56,23 @@ type Writer interface {
 }
 ```
 
-`multi.go` orchestrates: iterates over configured writers, calls each, collects errors.
+**Refactoring existing writers**: The current `notion.go` and `dryrun.go` use free functions. They must be wrapped in structs that hold their config and implement the `Writer` interface:
+
+```go
+// NotionWriter holds token, dbID, props — implements Writer
+type NotionWriter struct {
+    Token      string
+    DatabaseID string
+    Props      config.PropertiesConfig
+}
+
+// DryRunWriter implements Writer, outputs to terminal
+type DryRunWriter struct{}
+```
+
+`multi.go` orchestrates: iterates over configured writers, calls each, collects errors. If ALL writers fail, exit 1. If at least one succeeds, exit 0 with warnings for failures.
+
+**Backward compatibility**: existing `.shiplog.yml` files without a `writers` field remain valid — defaults to `["notion"]`.
 
 ### Slack Writer (`internal/writer/slack.go`)
 
@@ -74,6 +90,7 @@ POST to webhook URL using Slack Block Kit format:
 ```
 
 - Single message per push (not one per entry)
+- Max 10 entries per message (Slack Block Kit limit is 50 blocks). If more than 10, show first 10 + "and N more entries"
 - Include link to Notion database if Notion writer is also active
 - Env var: `SHIPLOG_SLACK_WEBHOOK` overrides config
 
@@ -96,7 +113,9 @@ Generates/updates `CHANGELOG.md` using Keep a Changelog format:
 ```
 
 - Prepend new entries at top (under `# Changelog` heading)
-- Create file if it doesn't exist
+- Create file with `# Changelog` heading if it doesn't exist
+- If file exists but has no `# Changelog` heading, prepend the heading
+- **Concurrency**: not safe for parallel runs writing to the same file. In CI, ensure only one workflow run writes CHANGELOG.md at a time (use GitHub concurrency groups)
 - Group entries by type within each date section
 - Include short SHAs in parentheses
 
@@ -147,8 +166,9 @@ routes:
 2. For each `ChangeEntry`, match changed files against route patterns (glob match)
 3. If match found, launch headless Chromium via `chromedp` (Go library, no external Playwright dependency)
 4. Navigate to `base_url + route`, wait for network idle, capture screenshot
-5. Upload screenshot to Notion page's Screenshot property via Notion file upload API
-6. If no match, no `.shiplog-screenshots.yml`, or any error → skip silently, log at debug level
+5. Save screenshot as PNG to a temp file
+6. Upload to Notion as a page content block (image block with external URL is not viable — instead, append the screenshot as a child block using the Notion `image` block type with `file` upload via multipart). **Fallback**: if direct upload is not supported by Notion API version, save screenshot locally to `.shiplog/screenshots/` and add the local path as a rich_text annotation in the Commits property. The Notion `files` property type only supports external URLs, so we embed as an image block in the page body instead.
+7. If no match, no `.shiplog-screenshots.yml`, or any error → skip silently, log at debug level
 
 ### Why `chromedp` over Playwright
 
@@ -227,6 +247,17 @@ Using `lipgloss` for borders, colors, padding.
 **`--output json` mode**: all UI output suppressed, only JSON to stdout.
 
 **`--quiet` flag**: suppress everything except errors. For CI where you don't need pretty output.
+
+### Complete CLI flags for `shiplog run`
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--dry-run` | bool | false | Preview without writing |
+| `--since` | string | | From specific commit SHA |
+| `--last` | int | 0 | Last N commits |
+| `--config` | string | `.shiplog.yml` | Config file path |
+| `--output` | string | `table` | Output format: `table` or `json` |
+| `--quiet` | bool | false | Suppress non-error output |
 
 ---
 
@@ -345,6 +376,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+      - uses: charmbracelet/vhs-action@v2
+        with:
+          path: demo.tape
       - uses: goreleaser/goreleaser-action@v6
         with:
           args: release --clean
