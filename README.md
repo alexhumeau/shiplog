@@ -21,7 +21,7 @@
 ## What it does
 
 - **Collects** commits, diffs, and project context from your git history
-- **Analyzes** changes using conventional commits + optional AI (Claude / GPT)
+- **Analyzes** changes using conventional commits + optional AI (Claude, GPT, Gemini, Mistral, DeepSeek, Groq, Grok, Cohere, Together, Fireworks)
 - **Writes** structured changelog entries to **Notion**, **Slack**, **Markdown**, and **JSON**
 
 ## Quick Start
@@ -172,10 +172,10 @@ context:
   max_context_chars: 16000
   max_diff_lines: 500
 
-# AI provider (optional)
+# AI provider (optional — pick any)
 ai:
-  provider: "anthropic"        # anthropic | openai
-  model: "claude-sonnet-4-6"  # optional, has smart defaults
+  provider: "anthropic"        # see supported providers below
+  model: "claude-sonnet-4-6"  # optional, has smart defaults per provider
   language: "en"               # output language
 
 # Filters
@@ -201,10 +201,18 @@ properties:
 |----------|-------------|
 | `NOTION_TOKEN` | Notion integration token |
 | `NOTION_DATABASE_ID` | Target database ID |
-| `SHIPLOG_AI_PROVIDER` | `anthropic` or `openai` |
-| `SHIPLOG_AI_API_KEY` | Generic LLM API key |
+| `SHIPLOG_AI_PROVIDER` | Provider name (see table below) |
+| `SHIPLOG_AI_API_KEY` | Generic LLM API key (works for any provider) |
 | `ANTHROPIC_API_KEY` | Anthropic-specific fallback |
 | `OPENAI_API_KEY` | OpenAI-specific fallback |
+| `GEMINI_API_KEY` | Google Gemini fallback |
+| `MISTRAL_API_KEY` | Mistral AI fallback |
+| `DEEPSEEK_API_KEY` | DeepSeek fallback |
+| `GROQ_API_KEY` | Groq fallback |
+| `XAI_API_KEY` | xAI (Grok) fallback |
+| `COHERE_API_KEY` | Cohere fallback |
+| `TOGETHER_API_KEY` | Together AI fallback |
+| `FIREWORKS_API_KEY` | Fireworks AI fallback |
 | `SHIPLOG_SLACK_WEBHOOK` | Slack webhook URL |
 | `SHIPLOG_LANGUAGE` | Output language |
 | `SHIPLOG_DRY_RUN` | Set to `true` for dry-run |
@@ -267,6 +275,25 @@ git push → Shiplog triggers
       ├─ Markdown: CHANGELOG.md (Keep a Changelog)
       └─ JSON: structured stdout for piping
 ```
+
+## Supported AI Providers
+
+Shiplog supports **10 LLM providers** out of the box. Set `ai.provider` in config or `SHIPLOG_AI_PROVIDER` env var:
+
+| Provider | Name | Default Model | Env Var |
+|----------|------|---------------|---------|
+| Anthropic | `anthropic` | `claude-sonnet-4-6` | `ANTHROPIC_API_KEY` |
+| OpenAI | `openai` | `gpt-4o-mini` | `OPENAI_API_KEY` |
+| Google Gemini | `gemini` | `gemini-2.5-flash` | `GEMINI_API_KEY` |
+| Mistral AI | `mistral` | `mistral-small-latest` | `MISTRAL_API_KEY` |
+| DeepSeek | `deepseek` | `deepseek-chat` | `DEEPSEEK_API_KEY` |
+| Groq | `groq` | `llama-3.3-70b-versatile` | `GROQ_API_KEY` |
+| xAI (Grok) | `xai` | `grok-3-mini` | `XAI_API_KEY` |
+| Cohere | `cohere` | `command-r-plus` | `COHERE_API_KEY` |
+| Together AI | `together` | `Llama-3.3-70B-Instruct-Turbo` | `TOGETHER_API_KEY` |
+| Fireworks AI | `fireworks` | `llama-v3p3-70b-instruct` | `FIREWORKS_API_KEY` |
+
+All providers also accept `SHIPLOG_AI_API_KEY` as a generic key. You can override the default model with `ai.model` in config.
 
 ## Without AI
 

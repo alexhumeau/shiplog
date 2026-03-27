@@ -131,13 +131,24 @@ func applyEnvOverrides(cfg *Config) {
 	// Generic key first, then provider-specific fallback
 	if v := os.Getenv("SHIPLOG_AI_API_KEY"); v != "" {
 		cfg.AI.APIKey = v
-	} else if cfg.AI.Provider == "anthropic" {
-		if v := os.Getenv("ANTHROPIC_API_KEY"); v != "" {
-			cfg.AI.APIKey = v
+	} else {
+		// Provider-specific env var fallbacks
+		envKeys := map[string]string{
+			"anthropic": "ANTHROPIC_API_KEY",
+			"openai":    "OPENAI_API_KEY",
+			"gemini":    "GEMINI_API_KEY",
+			"mistral":   "MISTRAL_API_KEY",
+			"deepseek":  "DEEPSEEK_API_KEY",
+			"groq":      "GROQ_API_KEY",
+			"xai":       "XAI_API_KEY",
+			"cohere":    "COHERE_API_KEY",
+			"together":  "TOGETHER_API_KEY",
+			"fireworks":  "FIREWORKS_API_KEY",
 		}
-	} else if cfg.AI.Provider == "openai" {
-		if v := os.Getenv("OPENAI_API_KEY"); v != "" {
-			cfg.AI.APIKey = v
+		if envKey, ok := envKeys[cfg.AI.Provider]; ok {
+			if v := os.Getenv(envKey); v != "" {
+				cfg.AI.APIKey = v
+			}
 		}
 	}
 	if v := os.Getenv("SHIPLOG_LANGUAGE"); v != "" {
@@ -153,11 +164,20 @@ func applyEnvOverrides(cfg *Config) {
 
 func applyModelDefaults(cfg *Config) {
 	if cfg.AI.Provider != "" && cfg.AI.Model == "" {
-		switch cfg.AI.Provider {
-		case "anthropic":
-			cfg.AI.Model = "claude-sonnet-4-6"
-		case "openai":
-			cfg.AI.Model = "gpt-4o-mini"
+		defaults := map[string]string{
+			"anthropic": "claude-sonnet-4-6",
+			"openai":    "gpt-4o-mini",
+			"gemini":    "gemini-2.5-flash",
+			"mistral":   "mistral-small-latest",
+			"deepseek":  "deepseek-chat",
+			"groq":      "llama-3.3-70b-versatile",
+			"xai":       "grok-3-mini",
+			"cohere":    "command-r-plus",
+			"together":  "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+			"fireworks": "accounts/fireworks/models/llama-v3p3-70b-instruct",
+		}
+		if model, ok := defaults[cfg.AI.Provider]; ok {
+			cfg.AI.Model = model
 		}
 	}
 	if cfg.AI.Language == "" {
