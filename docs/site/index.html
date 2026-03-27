@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shiplog — Auto-generate changelogs from git history</title>
+    <meta name="description" content="Push to main, get a changelog in Notion, Slack, Markdown, and more. Open-source CLI + GitHub Action.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --accent-dim: #1f6feb;
+            --green: #3fb950;
+            --orange: #d29922;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 80px 20px 60px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+        .hero h1 span { color: var(--accent); }
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero-demo {
+            max-width: 700px;
+            margin: 0 auto 40px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .hero-demo img {
+            width: 100%;
+            display: block;
+        }
+        .install-cmd {
+            display: inline-block;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 1rem;
+            color: var(--green);
+            user-select: all;
+        }
+        .install-cmd::before {
+            content: '$ ';
+            color: var(--text-muted);
+        }
+
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .feature {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+        }
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        .feature h3 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        .feature p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Pipeline */
+        .pipeline {
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+        .pipeline h2 {
+            font-size: 1.8rem;
+            margin-bottom: 32px;
+        }
+        .pipeline-diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            text-align: left;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+        .pipeline-diagram .hl { color: var(--accent); }
+        .pipeline-diagram .gr { color: var(--green); }
+        .pipeline-diagram .or { color: var(--orange); }
+
+        /* Quick Start */
+        .quickstart {
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+        .quickstart h2 {
+            font-size: 1.8rem;
+            margin-bottom: 32px;
+        }
+        .code-block {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            text-align: left;
+            overflow-x: auto;
+            line-height: 1.8;
+        }
+        .code-block .comment { color: var(--text-muted); }
+        .code-block .cmd { color: var(--green); }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        footer a { color: var(--text-muted); }
+        footer a:hover { color: var(--accent); }
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { font-size: 1.1rem; }
+            .features { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<section class="hero">
+    <h1>🚢 <span>Shiplog</span></h1>
+    <p>Push to main, get a changelog in Notion, Slack, and Markdown. Auto-generated from your git history.</p>
+    <div class="hero-demo">
+        <img src="demo.gif" alt="Shiplog demo — terminal output showing changelog entries">
+    </div>
+    <div class="install-cmd">brew install alexhumeau/tap/shiplog</div>
+</section>
+
+<section class="features">
+    <div class="feature">
+        <div class="feature-icon">🧠</div>
+        <h3>AI-Powered Analysis</h3>
+        <p>Uses Claude or GPT to group related commits and rewrite entries in plain language. Works without AI too — parses conventional commits.</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">📡</div>
+        <h3>Multi-Destination</h3>
+        <p>Write to Notion, Slack, Markdown, or JSON. Enable multiple writers at once — one push updates everything.</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">📸</div>
+        <h3>Auto Screenshots</h3>
+        <p>Convention-based screenshot capture. Map file patterns to routes, Shiplog captures them with headless Chrome.</p>
+    </div>
+</section>
+
+<section class="pipeline">
+    <h2>How it works</h2>
+    <div class="pipeline-diagram"><span class="hl">git push</span> → Shiplog triggers
+  │
+  ├─ <span class="gr">Collector</span>: git log + diff + README + docs
+  │
+  ├─ <span class="gr">Analyzer</span>: conventional commits + optional LLM
+  │   ├─ Groups related commits
+  │   ├─ Categorizes (feat/fix/refactor/docs/chore/perf)
+  │   └─ Rewrites titles in plain language
+  │
+  ├─ <span class="or">Screenshot</span>: headless Chrome capture (optional)
+  │
+  └─ <span class="gr">Writers</span>: multi-destination output
+      ├─ <span class="hl">Notion</span>: rich database entries with dedup
+      ├─ <span class="hl">Slack</span>: Block Kit webhook messages
+      ├─ <span class="hl">Markdown</span>: CHANGELOG.md
+      └─ <span class="hl">JSON</span>: structured stdout for piping</div>
+</section>
+
+<section class="quickstart">
+    <h2>Quick Start</h2>
+    <div class="code-block"><span class="comment"># Install</span>
+<span class="cmd">brew install alexhumeau/tap/shiplog</span>
+
+<span class="comment"># Setup (creates .shiplog.yml + Notion DB)</span>
+<span class="cmd">shiplog init</span>
+
+<span class="comment"># Preview</span>
+<span class="cmd">shiplog run --dry-run --last 10</span>
+
+<span class="comment"># Add to CI</span>
+<span class="cmd">cp .github/workflows/shiplog.yml your-repo/</span></div>
+</section>
+
+<footer>
+    <div class="footer-links">
+        <a href="https://github.com/alexandrehumeau/shiplog">GitHub</a>
+        <a href="https://github.com/alexandrehumeau/shiplog#quick-start">Docs</a>
+        <a href="https://github.com/alexandrehumeau/shiplog/releases">Releases</a>
+    </div>
+    <p>MIT License — Built by <a href="https://github.com/alexhumeau">@alexhumeau</a></p>
+</footer>
+
+</body>
+</html>

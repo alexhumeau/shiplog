@@ -44,4 +44,5 @@ type ChangeEntry struct {
 	Files       []string
 	Branch      string
 	Date        time.Time
+	Screenshot  []byte // PNG screenshot bytes, nil if none captured
 }

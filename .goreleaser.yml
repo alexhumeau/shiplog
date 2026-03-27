@@ -19,6 +19,16 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
+brews:
+  - repository:
+      owner: alexhumeau
+      name: homebrew-tap
+    homepage: "https://shiplog.sh"
+    description: "Auto-generate a structured changelog from git history"
+    license: "MIT"
+    install: |
+      bin.install "shiplog"
+
 changelog:
   sort: asc
   filters:

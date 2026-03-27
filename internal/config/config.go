@@ -11,6 +11,9 @@ import (
 // Config is the top-level configuration for Shiplog.
 type Config struct {
 	Notion     NotionConfig      `yaml:"notion"`
+	Writers    []string          `yaml:"writers"`
+	Slack      SlackConfig       `yaml:"slack"`
+	Markdown   MarkdownConfig    `yaml:"markdown"`
 	Context    ContextConfig     `yaml:"context"`
 	AI         AIConfig          `yaml:"ai"`
 	Categories map[string]string `yaml:"categories"`
@@ -22,6 +25,15 @@ type Config struct {
 type NotionConfig struct {
 	DatabaseID string `yaml:"database_id"`
 	Token      string `yaml:"-"` // from env only
+}
+
+type SlackConfig struct {
+	WebhookURL string `yaml:"webhook_url"`
+}
+
+type MarkdownConfig struct {
+	Path   string `yaml:"path"`
+	Format string `yaml:"format"`
 }
 
 type ContextConfig struct {
@@ -70,6 +82,7 @@ func Load(path string) (*Config, error) {
 
 	applyEnvOverrides(cfg)
 	applyModelDefaults(cfg)
+	applyWriterDefaults(cfg)
 
 	return cfg, nil
 }
@@ -80,6 +93,10 @@ func defaults() *Config {
 			Readme:          true,
 			MaxContextChars: 16000,
 			MaxDiffLines:    500,
+		},
+		Markdown: MarkdownConfig{
+			Path:   "CHANGELOG.md",
+			Format: "keepachangelog",
 		},
 		Categories: map[string]string{
 			"feat":     "✨ Feature",
@@ -129,6 +146,9 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("SHIPLOG_DRY_RUN"); strings.EqualFold(v, "true") {
 		cfg.DryRun = true
 	}
+	if v := os.Getenv("SHIPLOG_SLACK_WEBHOOK"); v != "" {
+		cfg.Slack.WebhookURL = v
+	}
 }
 
 func applyModelDefaults(cfg *Config) {
@@ -145,13 +165,36 @@ func applyModelDefaults(cfg *Config) {
 	}
 }
 
-// Validate checks that required config values are present.
-func (c *Config) Validate() error {
-	if c.Notion.Token == "" {
-		return fmt.Errorf("NOTION_TOKEN env var is required. Create an integration at https://www.notion.so/my-integrations")
+func applyWriterDefaults(cfg *Config) {
+	if len(cfg.Writers) == 0 {
+		cfg.Writers = []string{"notion"}
 	}
-	if c.Notion.DatabaseID == "" {
-		return fmt.Errorf("notion.database_id is required in .shiplog.yml or set NOTION_DATABASE_ID env var")
+}
+
+// HasWriter checks if a specific writer is enabled.
+func (c *Config) HasWriter(name string) bool {
+	for _, w := range c.Writers {
+		if w == name {
+			return true
+		}
+	}
+	return false
+}
+
+// Validate checks that required config values are present for enabled writers.
+func (c *Config) Validate() error {
+	if c.HasWriter("notion") {
+		if c.Notion.Token == "" {
+			return fmt.Errorf("NOTION_TOKEN env var is required when using Notion writer. Create an integration at https://www.notion.so/my-integrations")
+		}
+		if c.Notion.DatabaseID == "" {
+			return fmt.Errorf("notion.database_id is required in .shiplog.yml or set NOTION_DATABASE_ID env var")
+		}
+	}
+	if c.HasWriter("slack") {
+		if c.Slack.WebhookURL == "" {
+			return fmt.Errorf("slack.webhook_url is required in .shiplog.yml or set SHIPLOG_SLACK_WEBHOOK env var")
+		}
 	}
 	return nil
 }

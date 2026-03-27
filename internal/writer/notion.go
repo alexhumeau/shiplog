@@ -22,8 +22,21 @@ type NotionEntry struct {
 	Type  string
 }
 
-// WriteAll creates Notion pages for each entry, with deduplication.
-func WriteAll(token, dbID string, entries []model.ChangeEntry, props config.PropertiesConfig) error {
+// NotionWriter writes changelog entries to a Notion database.
+type NotionWriter struct {
+	Token      string
+	DatabaseID string
+	Props      config.PropertiesConfig
+}
+
+func (w *NotionWriter) Name() string { return "Notion" }
+
+func (w *NotionWriter) Write(entries []model.ChangeEntry) error {
+	return notionWriteAll(w.Token, w.DatabaseID, entries, w.Props)
+}
+
+// notionWriteAll creates Notion pages for each entry, with deduplication.
+func notionWriteAll(token, dbID string, entries []model.ChangeEntry, props config.PropertiesConfig) error {
 	// Collect all SHAs for dedup check
 	var allSHAs []string
 	for _, e := range entries {
