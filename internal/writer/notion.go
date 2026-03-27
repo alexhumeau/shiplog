@@ -239,7 +239,7 @@ func buildProperties(entry model.ChangeEntry, props config.PropertiesConfig, com
 		},
 		props.Files: map[string]interface{}{
 			"rich_text": []map[string]interface{}{
-				{"text": map[string]string{"content": strings.Join(entry.Files, ", ")}},
+				{"text": map[string]string{"content": truncate(strings.Join(entry.Files, ", "), 2000)}},
 			},
 		},
 	}
@@ -305,6 +305,13 @@ func bulletItem(text string) map[string]interface{} {
 			},
 		},
 	}
+}
+
+func truncate(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen-3] + "..."
 }
 
 func notionRequest(token, method, path string, body []byte) ([]byte, error) {
