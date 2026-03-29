@@ -15,11 +15,12 @@ import (
 
 // RunOptions holds CLI-specific options that override config.
 type RunOptions struct {
-	DryRun bool
-	Since  string
-	Last   int
-	Output string // "table" or "json"
-	Quiet  bool
+	DryRun  bool
+	Since   string
+	Last    int
+	Output  string // "table" or "json"
+	Quiet   bool
+	NoGroup bool
 }
 
 // Run executes the full Collector → Analyzer → Writer pipeline.
@@ -87,7 +88,7 @@ func Run(cfg *config.Config, opts RunOptions) error {
 		spinner = ui.StartSpinner(fmt.Sprintf("Analyzing with %s %s...", cfg.AI.Provider, cfg.AI.Model))
 	}
 
-	entries, err := analyzer.Analyze(pushData, cfg)
+	entries, err := analyzer.Analyze(pushData, cfg, opts.NoGroup)
 
 	if spinner != nil {
 		spinner.Stop()

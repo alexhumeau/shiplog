@@ -38,13 +38,15 @@ var runCmd = &cobra.Command{
 		last, _ := cmd.Flags().GetInt("last")
 		output, _ := cmd.Flags().GetString("output")
 		quiet, _ := cmd.Flags().GetBool("quiet")
+		noGroup, _ := cmd.Flags().GetBool("no-group")
 
 		return pipeline.Run(cfg, pipeline.RunOptions{
-			DryRun: dryRun,
-			Since:  since,
-			Last:   last,
-			Output: output,
-			Quiet:  quiet,
+			DryRun:  dryRun,
+			Since:   since,
+			Last:    last,
+			Output:  output,
+			Quiet:   quiet,
+			NoGroup: noGroup,
 		})
 	},
 }
@@ -65,6 +67,7 @@ func main() {
 	runCmd.Flags().String("config", "", "Path to .shiplog.yml (default: .shiplog.yml)")
 	runCmd.Flags().String("output", "table", "Output format: table or json")
 	runCmd.Flags().Bool("quiet", false, "Suppress non-error output")
+	runCmd.Flags().Bool("no-group", false, "One entry per commit (no grouping)")
 
 	initCmd.Flags().Bool("notion-setup", false, "Guided Notion integration creation")
 

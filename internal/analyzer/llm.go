@@ -26,12 +26,12 @@ type LLMEntry struct {
 }
 
 // Analyze runs the full analysis pipeline: conventional commits + optional LLM.
-func Analyze(data model.PushData, cfg *config.Config) ([]model.ChangeEntry, error) {
+func Analyze(data model.PushData, cfg *config.Config, noGroup bool) ([]model.ChangeEntry, error) {
 	// Always parse conventional commits
 	parsed := ParseConventional(data.Commits)
 
-	// Try LLM if configured
-	if cfg.AI.Provider != "" && cfg.AI.APIKey != "" {
+	// Try LLM if configured (skip if noGroup — user wants 1:1 commit→entry)
+	if !noGroup && cfg.AI.Provider != "" && cfg.AI.APIKey != "" {
 		entries, err := analyzeWithLLM(data, cfg, parsed)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "warning: LLM analysis failed, falling back to conventional commits: %v\n", err)
@@ -40,9 +40,11 @@ func Analyze(data model.PushData, cfg *config.Config) ([]model.ChangeEntry, erro
 		}
 	}
 
-	// Fallback: conventional commits + heuristic grouping
+	// Fallback: conventional commits + optional heuristic grouping
 	entries := ToChangeEntries(parsed, data.Branch)
-	entries = GroupByScope(entries, parsed)
+	if !noGroup {
+		entries = GroupByScope(entries, parsed)
+	}
 	return filterIgnoredTypes(entries, cfg.Filters.IgnoreTypes), nil
 }
 
